@@ -243,7 +243,7 @@ if state.run_button:
     st.button('Plot', use_container_width=True, on_click=plot_button)
 
     if state.plot_button:
-        state.figure = gen_plot(state.data, state.plot_pos, state.plot_var, plot_type=state.plot_type)
+        state.figure, state.data_filtered = gen_plot(state.data, state.plot_pos, state.plot_var, plot_type=state.plot_type)
         st.plotly_chart(state.figure)
 
         if st.checkbox('Show plotted data'):
