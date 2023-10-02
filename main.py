@@ -142,7 +142,7 @@ def gen_plot(df, pos, var, plot_type = 'heatmap',):
     else: 
         raise Exception('invalid plot type, options are \'heatmap\' or \'surface\'')
     
-    return fig
+    return fig, data_filtered
 
 @st.cache_data
 def convert_df(df):
