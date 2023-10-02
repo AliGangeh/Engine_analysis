@@ -130,14 +130,14 @@ def data_filter(df, pos, var):
 
 @st.cache_data
 def gen_plot(df, pos, var, plot_type = 'heatmap',): 
-    state.data_filtered = data_filter(df, pos, var)
+    data_filtered = data_filter(df, pos, var)
 
     if plot_type == 'heatmap': 
-        fig = px.imshow(state.data_filtered, width=600, height=600, origin='lower', color_continuous_scale='viridis', 
+        fig = px.imshow(data_filtered, width=600, height=600, origin='lower', color_continuous_scale='viridis', 
                         labels={"x": "OF Ratio (%weight)", "y": "Pressure (atm)", "hover": "Isp"}, 
                         title="Specific Impulse of LOX, RP1 Engine", aspect="auto")
     elif plot_type == 'surface':
-        surface = go.Surface(z=state.data_filtered.values, x = state.data_filtered.columns.values , y = state.data_filtered.index.values, colorscale = 'Viridis')
+        surface = go.Surface(z=data_filtered.values, x = data_filtered.columns.values , y = data_filtered.index.values, colorscale = 'Viridis')
         fig = go.Figure(data = [surface])
     else: 
         raise Exception('invalid plot type, options are \'heatmap\' or \'surface\'')
@@ -151,8 +151,12 @@ def convert_df(df):
 
 
 def get_input():
+    st.header('Rocket Cow Engine Visualizer')
+    st.write('Welcome to V0 of the :rainbow[Rocket Cow Engine Visualizer\u2122], enter a range of pressure and OF ratio and this app will let you visualize the conditions throughout the engine at any given point')
+
+
     # Prop input
-    st.header("Propellants")
+    st.subheader("Propellants")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -163,7 +167,7 @@ def get_input():
     
     # Pressure input
     st.divider()
-    st.header("Pressure")
+    st.subheader("Pressure")
             # col1, col2 = st.columns(2)
             # with col1: 
             #     st.header("Pressure")
@@ -185,7 +189,7 @@ def get_input():
 
     # OF conditions
     st.divider()
-    st.header("OF Ratio")
+    st.subheader("OF Ratio")
     
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -244,7 +248,6 @@ if state.run_button:
 
         if st.checkbox('Show plotted data'):
             st.subheader('Plotted data')
-            # state.data_filtered.columns = 
             st.dataframe(state.data_filtered)
             csv = convert_df(state.data_filtered)
             st.download_button("Press to Download", csv, "file.csv", "text/csv")
