@@ -233,7 +233,7 @@ if state.run_button:
         st.selectbox('Position:', ['chamber', 'throat', 'exit'], key='plot_pos')
 
     with col2:
-        st.selectbox('Variable:', ['of (wt ratio)', 'p (psi)', 't (K)', 'rho (kg/m^3)', 'v (m/s)', 'Isp (s)', 'Ivac (m/s)', 'c* (m/s)', 
+        st.selectbox('Variable:', ['t (K)', 'rho (kg/m^3)', 'v (m/s)', 'Isp (s)', 'Ivac (m/s)', 'c* (m/s)', 
                                              'cf', 'sound (m/s)', 'A/At', 'cp (kJ/kg-K)', 'cv (kJ/kg-K)', 'gamma', 'mol mass (g/mol)', 'h (kJ/kg)', 
                                              'u (kJ/kg)', 'g (kJ/kg)', 's (kJ/kg-K)', 'dV_P', 'dV_T'], key='plot_var')
 
