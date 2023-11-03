@@ -131,11 +131,11 @@ def data_filter(df, pos, var):
 @st.cache_data
 def gen_plot(df, pos, var, plot_type = 'heatmap',): 
     data_filtered = data_filter(df, pos, var)
-
+    print(df.attrs['ox'][0])
     if plot_type == 'heatmap': 
         fig = px.imshow(data_filtered, width=600, height=600, origin='lower', color_continuous_scale='viridis', 
-                        labels={"x": "OF Ratio (%weight)", "y": "Pressure (atm)", "hover": "Isp"}, 
-                        title="Specific Impulse of LOX, RP1 Engine", aspect="auto")
+                        labels={"x": "OF Ratio (%weight)", "y": "Pressure (atm)", "hover": var,'color':var}, 
+                        title="{} of {} & {} Engine at the {}".format(var, df.attrs['ox'][1], df.attrs['fuel'][1], pos), aspect="auto")
     elif plot_type == 'surface':
         surface = go.Surface(z=data_filtered.values, x = data_filtered.columns.values , y = data_filtered.index.values, colorscale = 'Viridis')
         fig = go.Figure(data = [surface])
@@ -149,76 +149,76 @@ def convert_df(df):
     return df.to_csv().encode('utf-8')
 
 
+### Creates the UI
+st.header('Rocket Cow Engine Visualizer')
+st.write('Welcome to V0 of the :rainbow[Rocket Cow Engine Visualizer\u2122], enter a range of pressure and OF ratio and this app will let you visualize the conditions throughout the engine at any given point')
 
-def get_input():
-    st.header('Rocket Cow Engine Visualizer')
-    st.write('Welcome to V0 of the :rainbow[Rocket Cow Engine Visualizer\u2122], enter a range of pressure and OF ratio and this app will let you visualize the conditions throughout the engine at any given point')
 
 
-    # Prop input
-    st.subheader("Propellants")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.selectbox('Fuel:', ['RP-1 (RPL)', 'METHANE', 'PROPANE'], key='fuel')
-
-    with col2:
-        st.selectbox('Oxidizer:',['OXYGEN (LIQUID)', 'OXYGEN (GAS)', 'NITROUS OXIDE', 'AIR (DRY AT SEA LEVEL)'], key='ox')
-    
-    # Pressure input
-    st.divider()
-    st.subheader("Pressure")
-            # col1, col2 = st.columns(2)
+# col1, col2 = st.columns(2)
             # with col1: 
             #     st.header("Pressure")
             # with col2:
             #     st.selectbox('', ['Psi', 'Bar', 'Mpa', 'Atm'], key='p_unit')
 
-    col1, col2, col3 = st.columns(3)
 
-    with col1:
-        st.number_input('Min Chamber Pressure (atm):', key='p_min', min_value=0, value=5, step=5, )
+with st.form('OF & Pressure form'):
+    # Prop input
+    st.subheader("Propellants")
+    col1, col2 = st.columns(2)
+    col1.selectbox('Fuel:', ['RP-1 (RPL)', 'METHANE', 'PROPANE'], key='fuel')
+    col2.selectbox('Oxidizer:',['OXYGEN (LIQUID)', 'OXYGEN (GAS)', 'NITROUS OXIDE', 'AIR (DRY AT SEA LEVEL)'], key='ox')
+    
+    # Pressure input
+    st.divider()
+    st.subheader("Pressure")
 
-    with col2:
-        st.number_input('Max Pressure (atm):', key='p_max', min_value = state.p_min, value = 101,  step = 5)
+    col1, col2, col3 = st.columns([0.38,0.38,0.24   ])
+    col1.number_input('Min Chamber Pressure (atm):', key='p_min', min_value=0.0, value=5.0, step=5.0)
+    col2.number_input('Max Pressure (atm):', key='p_max', min_value = 0.0, value = 101.0,  step = 5.0)
+    col3.number_input('Step Size (atm):', key='p_step', min_value=0.01, value = 5.0, step = 1.0)  
 
-    with col3:
-        st.number_input('Step Size (atm):', key='p_step', min_value=0, max_value = (state.p_max - state.p_min), value = 5, step = 1)  
-
-    st.number_input('Ambient Pressure (atm):', key='pe', min_value=0.0 ,value=1.0 ,step=0.1)
+    st.number_input('Ambient Pressure (atm):', key='p_e', min_value=0.0 ,value=1.0 ,step=0.1)
 
     # OF conditions
     st.divider()
     st.subheader("OF Ratio")
     
     col1, col2, col3 = st.columns(3)
-    with col1:
-        st.number_input('Min OF (%wt ratio):', key='of_min', min_value = 0.01, value = 0.5, step=0.1)
-
-    with col2:
-        st.number_input('Max OF (%wt ratio):', key='of_max', min_value = state.of_min, value = 10.1,  step = 0.1)
-
-    with col3:
-        st.number_input('Step Size (%wt ratio):', key='of_step', max_value = (state.of_max - state.of_min), value= 0.2, step= 0.05)
+    col1.number_input('Min OF (%wt ratio):', key='of_min', min_value = 0.01, value = 0.5, step=0.1)
+    col2.number_input('Max OF (%wt ratio):', key='of_max', min_value = 0.01, value = 10.1,  step = 0.1)
+    col3.number_input('Step Size (%wt ratio):', key='of_step', min_value = 0.0001, value= 0.2, step= 0.05)
     
     # sim type and run
-    st.divider()    
-    st.selectbox('Assumption', ['FROZEN', 'SHIFTING'], key='assume')
-    st.button('Run', use_container_width=True, on_click=run_button)
+    st.divider()  
+    st.subheader("Assumptions")
 
-    return 1
+    st.selectbox('reacting flow condition', ['FROZEN', 'SHIFTING'], key='assume')
+    st.form_submit_button('Run', use_container_width = True, on_click=run_button)
 
-# @st.cache_data
+
+if state.run_button:
+    
+    if(state.p_min > state.p_max):
+        st.warning('Your minimum pressure is greater than your maximum pressure! Adjust and rerun.', icon="⚠️")
+        st.stop()
+    if(state.p_min < state.p_e):
+        st.warning('Your your exit pressure exceeds your minimum pressure! Your chamber pressure must always exceed ambient pressure. Adjust and rerun.', icon="⚠️")
+        st.stop()
+    if(state.p_step > (state.p_max-state.p_min)):
+        st.warning('Your pressure step size is greater than your pressure range! Adjust and rerun', icon="⚠️")
+        st.stop()
+
+    if(state.of_min > state.of_max):
+        st.warning('Your minimum OF ratio is greater than your maximum OF ratio! Adjust and rerun', icon="⚠️")
+        st.stop()
+    if(state.of_step > (state.p_max-state.p_min)):
+        st.warning('Your OF ratio step size is greater than your OF ratio range! Adjust and rerun', icon="⚠️")
+        st.stop()
 
 
     
-
-# make GUI
-get_input()
-
-if state.run_button:
-    state.data = ranged_sim(state.ox,state.fuel , list(np.arange(state.of_min, state.of_max, state.of_step)), 
-                            list(np.arange(state.p_min,state.p_max, state.p_step)), assumption = state.assume)
+    state.data = ranged_sim(state.ox,state.fuel , list(np.arange(state.of_min, state.of_max, state.of_step)), list(np.arange(state.p_min,state.p_max, state.p_step)), assumption = state.assume, p_e = state.p_e)
     
     st.header('Results')
     if st.checkbox('Show raw data'):
@@ -234,8 +234,8 @@ if state.run_button:
 
     with col2:
         st.selectbox('Variable:', ['t (K)', 'rho (kg/m^3)', 'v (m/s)', 'Isp (s)', 'Ivac (m/s)', 'c* (m/s)', 
-                                             'cf', 'sound (m/s)', 'A/At', 'cp (kJ/kg-K)', 'cv (kJ/kg-K)', 'gamma', 'mol mass (g/mol)', 'h (kJ/kg)', 
-                                             'u (kJ/kg)', 'g (kJ/kg)', 's (kJ/kg-K)', 'dV_P', 'dV_T'], key='plot_var')
+                                            'cf', 'sound (m/s)', 'A/At', 'cp (kJ/kg-K)', 'cv (kJ/kg-K)', 'gamma', 'mol mass (g/mol)', 'h (kJ/kg)', 
+                                            'u (kJ/kg)', 'g (kJ/kg)', 's (kJ/kg-K)', 'dV_P', 'dV_T'], key='plot_var')
 
     with col3:
         st.selectbox('Plot Type:', ['heatmap', 'surface'], key='plot_type')
@@ -250,11 +250,7 @@ if state.run_button:
             st.subheader('Plotted data')
             st.dataframe(state.data_filtered)
             csv = convert_df(state.data_filtered)
-            st.download_button("Press to Download", csv, "file.csv", "text/csv")
-
-
-    st.write("haha I ran")
-    
+            st.download_button("Press to Download", csv, "file.csv", "text/csv")    
 
 # running stuff
 # data = ranged_sim(state.ox,state.fuel , list(np.arange(state.of_min, state.of_max, state.of_step)), 
